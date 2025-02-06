@@ -1,0 +1,171 @@
+openapi: "3.0.1"
+info:
+  title: Заголовок сервиса
+  version: "1.0"
+  description: |
+    Описание сервиса
+servers:
+  - url: http://localhost:8080/api
+    description: Локальный сервер API
+
+paths:
+  /ping:
+    get:
+      summary: Проверка доступности сервера
+      description: |
+        Этот эндпоинт используется для проверки готовности сервера обрабатывать запросы. 
+
+        Чекер программа будет ждать первый успешный ответ и затем начнет выполнение тестовых сценариев.
+      operationId: checkServer
+      responses:
+        "200":
+          description: |
+            Сервер готов обрабатывать запросы, если отвечает "200 OK".
+            Тело ответа не важно, достаточно вернуть "ok".
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+        "400":
+          description: Неверный формат запроса или его параметры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "500":
+          description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+
+  /user/signin:
+    post:
+      summary: Регистрация нового пользователя
+      description: Регистрация нового пользователя
+      operationId: createUser
+      requestBody:
+        description: Данные нового пользователя
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              properties:
+                username:
+                  $ref: "#/components/schemas/username"
+                email:
+                  $ref: "#/components/schemas/email"
+                password:
+                  $ref: "#/components/schemas/password"
+                is_admin:
+                  $ref: "#/components/schemas/is_admin"
+              required:
+                - username
+                - email
+                - password
+                - is_admin
+      responses:
+        "200":
+          description: Пользователь успешно зарегестрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user"
+        "400":
+          description: Неверный формат запроса или его параметры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "401":
+          description: Пользователь не существует или введены некорректные данные.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "500":
+          description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+  
+  /user/login:
+    post:
+      summary: Вход пользователя
+      description: Логин
+      operationId: user
+      requestBody:
+        description: Данные пользователя
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              properties:
+                username:
+                  $ref: "#/components/schemas/username"
+                password:
+                  $ref: "#/components/schemas/password"
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: Вход выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user"
+        "400":
+          description: Неверный формат запроса или его параметры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "401":
+          description: Пользователь не существует или введены некорректные данные.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "500":
+          description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+
+components:
+  schemas:
+    username:
+      type: string
+      description: Уникальный логин пользователя
+      example: user123
+    email:
+      type: string
+      description: Уникальный email пользователя
+      example: user@mail.ru
+    password:
+      type: string
+      description: Пороль пользователя
+      example: qwerty12345
+    is_admin:
+      type: boolean
+    user:
+      type: object
+      description: Информация о пользователе
+      properties:
+        username:
+          $ref: "#/components/schemas/username"
+        email:
+          $ref: "#/components/schemas/email"
+        is_admin:
+          $ref: "#/components/schemas/is_admin"
+      required:
+        - username
+        - email
+        - is_admin
+
+    errorResponse:
+      type: object
+      description: Используется для возвращения ошибки пользователю
+      properties:
+        reason:
+          type: string
+          description: Описание ошибки в свободной форме
+          minLength: 5
+      required:
+        - reason
+      example:
+        reason: <объяснение, почему запрос пользователя не может быть обработан>

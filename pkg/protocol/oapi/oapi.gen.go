@@ -48,8 +48,8 @@ type User struct {
 // Username Уникальный логин пользователя
 type Username = string
 
-// UserJSONBody defines parameters for User.
-type UserJSONBody struct {
+// LogInJSONBody defines parameters for LogIn.
+type LogInJSONBody struct {
 	// Password Пороль пользователя
 	Password Password `json:"password"`
 
@@ -57,8 +57,8 @@ type UserJSONBody struct {
 	Username Username `json:"username"`
 }
 
-// CreateUserJSONBody defines parameters for CreateUser.
-type CreateUserJSONBody struct {
+// SignInJSONBody defines parameters for SignIn.
+type SignInJSONBody struct {
 	// Email Уникальный email пользователя
 	Email   Email   `json:"email"`
 	IsAdmin IsAdmin `json:"is_admin"`
@@ -70,11 +70,11 @@ type CreateUserJSONBody struct {
 	Username Username `json:"username"`
 }
 
-// UserJSONRequestBody defines body for User for application/json ContentType.
-type UserJSONRequestBody UserJSONBody
+// LogInJSONRequestBody defines body for LogIn for application/json ContentType.
+type LogInJSONRequestBody LogInJSONBody
 
-// CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
-type CreateUserJSONRequestBody CreateUserJSONBody
+// SignInJSONRequestBody defines body for SignIn for application/json ContentType.
+type SignInJSONRequestBody SignInJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -152,15 +152,15 @@ type ClientInterface interface {
 	// CheckServer request
 	CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UserWithBody request with any body
-	UserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// LogInWithBody request with any body
+	LogInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	User(ctx context.Context, body UserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	LogIn(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateUserWithBody request with any body
-	CreateUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SignInWithBody request with any body
+	SignInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateUser(ctx context.Context, body CreateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -175,8 +175,8 @@ func (c *Client) CheckServer(ctx context.Context, reqEditors ...RequestEditorFn)
 	return c.Client.Do(req)
 }
 
-func (c *Client) UserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUserRequestWithBody(c.Server, contentType, body)
+func (c *Client) LogInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLogInRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -187,8 +187,8 @@ func (c *Client) UserWithBody(ctx context.Context, contentType string, body io.R
 	return c.Client.Do(req)
 }
 
-func (c *Client) User(ctx context.Context, body UserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUserRequest(c.Server, body)
+func (c *Client) LogIn(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLogInRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +199,8 @@ func (c *Client) User(ctx context.Context, body UserJSONRequestBody, reqEditors 
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateUserRequestWithBody(c.Server, contentType, body)
+func (c *Client) SignInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSignInRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -211,8 +211,8 @@ func (c *Client) CreateUserWithBody(ctx context.Context, contentType string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateUser(ctx context.Context, body CreateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateUserRequest(c.Server, body)
+func (c *Client) SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSignInRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -250,19 +250,19 @@ func NewCheckServerRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewUserRequest calls the generic User builder with application/json body
-func NewUserRequest(server string, body UserJSONRequestBody) (*http.Request, error) {
+// NewLogInRequest calls the generic LogIn builder with application/json body
+func NewLogInRequest(server string, body LogInJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUserRequestWithBody(server, "application/json", bodyReader)
+	return NewLogInRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewUserRequestWithBody generates requests for User with any type of body
-func NewUserRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewLogInRequestWithBody generates requests for LogIn with any type of body
+func NewLogInRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -290,19 +290,19 @@ func NewUserRequestWithBody(server string, contentType string, body io.Reader) (
 	return req, nil
 }
 
-// NewCreateUserRequest calls the generic CreateUser builder with application/json body
-func NewCreateUserRequest(server string, body CreateUserJSONRequestBody) (*http.Request, error) {
+// NewSignInRequest calls the generic SignIn builder with application/json body
+func NewSignInRequest(server string, body SignInJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateUserRequestWithBody(server, "application/json", bodyReader)
+	return NewSignInRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateUserRequestWithBody generates requests for CreateUser with any type of body
-func NewCreateUserRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewSignInRequestWithBody generates requests for SignIn with any type of body
+func NewSignInRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -376,15 +376,15 @@ type ClientWithResponsesInterface interface {
 	// CheckServerWithResponse request
 	CheckServerWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckServerResponse, error)
 
-	// UserWithBodyWithResponse request with any body
-	UserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UserResponse, error)
+	// LogInWithBodyWithResponse request with any body
+	LogInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LogInResponse, error)
 
-	UserWithResponse(ctx context.Context, body UserJSONRequestBody, reqEditors ...RequestEditorFn) (*UserResponse, error)
+	LogInWithResponse(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*LogInResponse, error)
 
-	// CreateUserWithBodyWithResponse request with any body
-	CreateUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserResponse, error)
+	// SignInWithBodyWithResponse request with any body
+	SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error)
 
-	CreateUserWithResponse(ctx context.Context, body CreateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserResponse, error)
+	SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error)
 }
 
 type CheckServerResponse struct {
@@ -409,7 +409,7 @@ func (r CheckServerResponse) StatusCode() int {
 	return 0
 }
 
-type UserResponse struct {
+type LogInResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *User
@@ -418,7 +418,7 @@ type UserResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r UserResponse) Status() string {
+func (r LogInResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -426,14 +426,14 @@ func (r UserResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UserResponse) StatusCode() int {
+func (r LogInResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type CreateUserResponse struct {
+type SignInResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *User
@@ -442,7 +442,7 @@ type CreateUserResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateUserResponse) Status() string {
+func (r SignInResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -450,7 +450,7 @@ func (r CreateUserResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateUserResponse) StatusCode() int {
+func (r SignInResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -466,38 +466,38 @@ func (c *ClientWithResponses) CheckServerWithResponse(ctx context.Context, reqEd
 	return ParseCheckServerResponse(rsp)
 }
 
-// UserWithBodyWithResponse request with arbitrary body returning *UserResponse
-func (c *ClientWithResponses) UserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UserResponse, error) {
-	rsp, err := c.UserWithBody(ctx, contentType, body, reqEditors...)
+// LogInWithBodyWithResponse request with arbitrary body returning *LogInResponse
+func (c *ClientWithResponses) LogInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LogInResponse, error) {
+	rsp, err := c.LogInWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUserResponse(rsp)
+	return ParseLogInResponse(rsp)
 }
 
-func (c *ClientWithResponses) UserWithResponse(ctx context.Context, body UserJSONRequestBody, reqEditors ...RequestEditorFn) (*UserResponse, error) {
-	rsp, err := c.User(ctx, body, reqEditors...)
+func (c *ClientWithResponses) LogInWithResponse(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*LogInResponse, error) {
+	rsp, err := c.LogIn(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUserResponse(rsp)
+	return ParseLogInResponse(rsp)
 }
 
-// CreateUserWithBodyWithResponse request with arbitrary body returning *CreateUserResponse
-func (c *ClientWithResponses) CreateUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserResponse, error) {
-	rsp, err := c.CreateUserWithBody(ctx, contentType, body, reqEditors...)
+// SignInWithBodyWithResponse request with arbitrary body returning *SignInResponse
+func (c *ClientWithResponses) SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error) {
+	rsp, err := c.SignInWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateUserResponse(rsp)
+	return ParseSignInResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateUserWithResponse(ctx context.Context, body CreateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserResponse, error) {
-	rsp, err := c.CreateUser(ctx, body, reqEditors...)
+func (c *ClientWithResponses) SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error) {
+	rsp, err := c.SignIn(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateUserResponse(rsp)
+	return ParseSignInResponse(rsp)
 }
 
 // ParseCheckServerResponse parses an HTTP response from a CheckServerWithResponse call
@@ -526,15 +526,15 @@ func ParseCheckServerResponse(rsp *http.Response) (*CheckServerResponse, error) 
 	return response, nil
 }
 
-// ParseUserResponse parses an HTTP response from a UserWithResponse call
-func ParseUserResponse(rsp *http.Response) (*UserResponse, error) {
+// ParseLogInResponse parses an HTTP response from a LogInWithResponse call
+func ParseLogInResponse(rsp *http.Response) (*LogInResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UserResponse{
+	response := &LogInResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -566,15 +566,15 @@ func ParseUserResponse(rsp *http.Response) (*UserResponse, error) {
 	return response, nil
 }
 
-// ParseCreateUserResponse parses an HTTP response from a CreateUserWithResponse call
-func ParseCreateUserResponse(rsp *http.Response) (*CreateUserResponse, error) {
+// ParseSignInResponse parses an HTTP response from a SignInWithResponse call
+func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateUserResponse{
+	response := &SignInResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -613,10 +613,10 @@ type ServerInterface interface {
 	CheckServer(c *gin.Context)
 	// Вход пользователя
 	// (POST /user/login)
-	User(c *gin.Context)
+	LogIn(c *gin.Context)
 	// Регистрация нового пользователя
 	// (POST /user/signin)
-	CreateUser(c *gin.Context)
+	SignIn(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -641,8 +641,8 @@ func (siw *ServerInterfaceWrapper) CheckServer(c *gin.Context) {
 	siw.Handler.CheckServer(c)
 }
 
-// User operation middleware
-func (siw *ServerInterfaceWrapper) User(c *gin.Context) {
+// LogIn operation middleware
+func (siw *ServerInterfaceWrapper) LogIn(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -651,11 +651,11 @@ func (siw *ServerInterfaceWrapper) User(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.User(c)
+	siw.Handler.LogIn(c)
 }
 
-// CreateUser operation middleware
-func (siw *ServerInterfaceWrapper) CreateUser(c *gin.Context) {
+// SignIn operation middleware
+func (siw *ServerInterfaceWrapper) SignIn(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -664,7 +664,7 @@ func (siw *ServerInterfaceWrapper) CreateUser(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.CreateUser(c)
+	siw.Handler.SignIn(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -695,35 +695,35 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/ping", wrapper.CheckServer)
-	router.POST(options.BaseURL+"/user/login", wrapper.User)
-	router.POST(options.BaseURL+"/user/signin", wrapper.CreateUser)
+	router.POST(options.BaseURL+"/user/login", wrapper.LogIn)
+	router.POST(options.BaseURL+"/user/signin", wrapper.SignIn)
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xXXW/bVBj+K0cHLq3EbVdp8hUfVxNIIBBXy4S89Kz1ltie7Wyrqkr5YB/QsUkICSQE",
-	"4+OCKyQ3jTe3jd2/8L7/CL2vHcdpnDTABmjaTRvZ5+M5z/s8z3u8J5tO23VsZQe+NPak39xRbZN/qrZp",
-	"tejHlvKbnuUGlmNLQ8JvkEAMJxDCKT6GBA/gWPBYAWeQ8sMXkMIQQuxDBKf4VGpS3TPbbktJQ3Z85b1D",
-	"w2teR2oy2HXpqR94lr0t9zWpPM/xPlG+69i+qtj+e+xN98EBRNjHHj4VMKKtBAwhhRcwxC6E+CVEBJYe",
-	"p/gIYjiEE4gX4XxSxrknPWX6vGWjo+sbTUjhEL/Cp9iDJFsWIo2XwocQwRgHAl5ACGfYhRR7C8kQNF3A",
-	"GFJ4TuAFHOIB9vGx4B26EMIhpNiHEBLeWRErrue4ygss5ZehzZHzE5xBjD2aS/jOHXsosMf8HEIKI0gg",
-	"hWOBX0CKXRhDJDXZtuwPlb0d7Ehjc642+5r01O2O5aktaVydgLhWjHOu31TNgNBa/ufmVttihPnL647T",
-	"UqbNZzF9/67jbVXgf8ZYmLfV1HT7rvKC3bX1jUubVWIisVVpCJLi2CE+yBWyYEcmZpb/whpve+qGNORb",
-	"9amL6rmF6tmgc2wsm1CMy4HbZltdNKcYd746xQstR1vCUVWy8oYrGB5OIYUjiCFZ3fVr6xvzNSLcln3D",
-	"WUHM2IMIuzDMHjZsWswKeHn4DkI4IhyMIYWTc6OlJu8oz89WXqvpdGTHVbbpWtKQGzW9tkZVNoMdLnDd",
-	"JXDGntxWQQWyP7BPFhX4NSQwYgJiSMjL8QXpxOkAQ4bGnjxir9OjhGID+xBPodPfsJwLIfbxICOZHFLK",
-	"GzyoiYbdsOF3iOCEZk42O+K5Y5I6Zc0ARlnsPIfRZJ2zbD+uLA74CBE+mpSaAA6zOTHvyRUeU5CF+JDi",
-	"jF7RbD75NB4FDeQzpfQa7wvs4QN+G2KXRsCwxnUkc5nE7pUtacj3d1Tz1qfKu6M8SarOegEXZl3X6V/T",
-	"sQNlc2kCdS+ouy0z81fmC/ZooT3nVrXszhX1lynppbKsyr4m6KhwShRNCHsIIXPTINjiow8astaw4VcO",
-	"lbTEKxWGm8IQQnhOQtBIMJkcQtYa0ZyKXBIJDhhBQzq3eE1S86U5ZkzXbVlNprV+M+8XU36WRtdMD64i",
-	"60eqXQ7moNxFQtJCiRk6W5zREhGrJLYwVySZo4sHNYK/mcFfVhOm6KUUpi8m1LLaUxiLTV0vgJ7iE26R",
-	"xwJG2MUBJ8uxJuCEDTWGSKzreo0z1++026a3y81rxtthUUIcwNlCd/MiHOP1lrOdidh1/KrU+WESuXOG",
-	"+czPnXK7o/zgPWdr9y9JYba5ldvzMpEU415yuyrWnW9TFUL8ltsDiTBa1ommewVeR+1fmCp/3zt85ahC",
-	"+g3ep2vXXFLOJC6kr4GXL+lr/yL8Z5VFf5zlBfZwQJ8B7L1h1pCLQwzp2NQO6eA8Hk7o6NilX9ifyGo0",
-	"1djrklWFGBdZZhpLvrVtL82ln1kNMUddd3qfTvKr2NHCmzU781zr95QZqJeaZ6/+sv5fJ+bkgl+sv/Su",
-	"f1GIrli3/0GiLnL+bKBmV9YuizTKRRrnrTqE5E3evsnbV5+3/yQjuQg+fw750rhaeS+c/TovXzHFux9f",
-	"kZrseC1pyJ0gcI16veU0zdaO4wfGZf2yXqeP4P1r+38GAAD///vWypQMFAAA",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

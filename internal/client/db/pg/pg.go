@@ -50,7 +50,7 @@ func (pg *pg) ExecContext(ctx context.Context, quer db.Query, args ...interface{
 		return tx.Exec(ctx, quer.QueryRow, args...)
 	}
 
-	return pg.dbc.Exec(ctx, quer.QueryRow, args)
+	return pg.dbc.Exec(ctx, quer.QueryRow, args...)
 }
 
 func (pg *pg) QueryContext(ctx context.Context, quer db.Query, args ...interface{}) (pgx.Rows, error) {
@@ -65,10 +65,10 @@ func (pg *pg) QueryContext(ctx context.Context, quer db.Query, args ...interface
 func (pg *pg) QueryRowContext(ctx context.Context, quer db.Query, args ...interface{}) pgx.Row {
 	tx, ok := ctx.Value(TxKey).(pgx.Tx)
 	if ok {
-		return tx.QueryRow(ctx, quer.QueryRow, args)
+		return tx.QueryRow(ctx, quer.QueryRow, args...)
 	}
 
-	return pg.dbc.QueryRow(ctx, quer.QueryRow, args)
+	return pg.dbc.QueryRow(ctx, quer.QueryRow, args...)
 }
 
 func (p *pg) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {

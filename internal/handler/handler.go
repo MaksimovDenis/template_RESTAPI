@@ -15,13 +15,13 @@ const (
 )
 
 type Handler struct {
-	serverService service.ServerService
+	serverService service.Service
 	tokenMaker    *token.JWTMaker
 }
 
-func NewHandler(serverService service.ServerService, secretKey string) *Handler {
+func NewHandler(appService service.Service, secretKey string) *Handler {
 	return &Handler{
-		serverService: serverService,
+		serverService: appService,
 		tokenMaker:    token.NewJWTMaker(secretKey),
 	}
 }

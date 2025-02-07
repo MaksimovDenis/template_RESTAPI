@@ -9,9 +9,7 @@ import (
 	"templates_new/internal/config"
 	"templates_new/internal/handler"
 	"templates_new/internal/repository"
-	serviceRepository "templates_new/internal/repository/service"
 	"templates_new/internal/service"
-	serverservice "templates_new/internal/service/serverService"
 )
 
 type serviceProvider struct {
@@ -19,11 +17,11 @@ type serviceProvider struct {
 	serverConfig config.ServerConfig
 	tokenConfig  config.TokenConfig
 
-	dbClient          db.Client
-	txManager         db.TxManager
-	serviceRepository repository.ServiceRepository
+	dbClient      db.Client
+	txManager     db.TxManager
+	appRepository *repository.Repository
 
-	serverService service.ServerService
+	appService *service.Service
 
 	handler *handler.Handler
 }
@@ -97,23 +95,23 @@ func (srv *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	return srv.txManager
 }
 
-func (srv *serviceProvider) ServiceRepository(ctx context.Context) repository.ServiceRepository {
-	if srv.serviceRepository == nil {
-		srv.serviceRepository = serviceRepository.NewRepository(srv.DBClient(ctx))
+func (srv *serviceProvider) AppRepository(ctx context.Context) *repository.Repository {
+	if srv.appRepository == nil {
+		srv.appRepository = repository.NewRepository(srv.DBClient(ctx))
 	}
 
-	return srv.serviceRepository
+	return srv.appRepository
 }
 
-func (srv *serviceProvider) ServerService(ctx context.Context) service.ServerService {
-	if srv.serverService == nil {
-		srv.serverService = serverservice.NewService(
-			srv.ServiceRepository(ctx),
+func (srv *serviceProvider) ServerService(ctx context.Context) service.Service {
+	if srv.appService == nil {
+		srv.appService = service.NewService(
+			*srv.AppRepository(ctx),
 			srv.TxManager(ctx),
 		)
 	}
 
-	return srv.serverService
+	return *srv.appService
 }
 
 func (srv *serviceProvider) ServiceHandler(ctx context.Context) *handler.Handler {

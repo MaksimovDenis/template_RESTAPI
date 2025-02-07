@@ -40,7 +40,7 @@ paths:
     post:
       summary: Регистрация нового пользователя
       description: Регистрация нового пользователя
-      operationId: createUser
+      operationId: signIn
       requestBody:
         description: Данные нового пользователя
         required: true
@@ -88,7 +88,7 @@ paths:
     post:
       summary: Вход пользователя
       description: Логин
-      operationId: user
+      operationId: logIn
       requestBody:
         description: Данные пользователя
         required: true

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -15,14 +16,16 @@ const (
 )
 
 type Handler struct {
-	serverService service.Service
-	tokenMaker    *token.JWTMaker
+	appService service.Service
+	tokenMaker *token.JWTMaker
+	log        zerolog.Logger
 }
 
-func NewHandler(appService service.Service, secretKey string) *Handler {
+func NewHandler(appService service.Service, tokenMaker token.JWTMaker, log zerolog.Logger) *Handler {
 	return &Handler{
-		serverService: appService,
-		tokenMaker:    token.NewJWTMaker(secretKey),
+		appService: appService,
+		tokenMaker: &tokenMaker,
+		log:        log,
 	}
 }
 
@@ -33,14 +36,11 @@ func (hdl *Handler) InitRoutes() *gin.Engine {
 
 	tokenMaker := hdl.tokenMaker
 
-	adminRoutes := router.Group("/api/admin")
-	adminRoutes.Use(GetAdminMiddlewareFunc(tokenMaker))
-
-	userRoutes := router.Group("/api/user")
-	userRoutes.Use(GetAuthMiddlewareFunc(tokenMaker))
-
 	oapi.RegisterHandlersWithOptions(router, hdl, oapi.GinServerOptions{
 		BaseURL: "/api",
+		Middlewares: []oapi.MiddlewareFunc{
+			GetAuthMiddlewareFunc(tokenMaker),
+		},
 	})
 
 	return router

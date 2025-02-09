@@ -1,0 +1,3 @@
+{"level":"error","module":"repository","error":"ERROR: column \"sessions\" does not exist (SQLSTATE 42703)","time":"2025-02-09T16:45:49+03:00","message":"GetSessionById: failed to execute query"}
+{"level":"error","module":"service","error":"ERROR: column \"sessions\" does not exist (SQLSTATE 42703)","time":"2025-02-09T16:45:49+03:00","message":"failed to retrieve session"}
+{"level":"error","module":"api","error":"ERROR: column \"sessions\" does not exist (SQLSTATE 42703)","time":"2025-02-09T16:45:49+03:00","message":"failed to renew access token"}

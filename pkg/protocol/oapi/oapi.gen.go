@@ -18,7 +18,14 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// AccessToken Access токен пользователя
+type AccessToken = string
+
+// AccessTokenExpiresAt Время истечения Access токена
+type AccessTokenExpiresAt = openapi_types.Date
 
 // Email Уникальный email пользователя
 type Email = string
@@ -32,11 +39,78 @@ type ErrorResponse struct {
 // IsAdmin defines model for is_admin.
 type IsAdmin = bool
 
+// LoginUserReq Тело запроса при входе пользователя
+type LoginUserReq struct {
+	// Email Уникальный email пользователя
+	Email Email `json:"email"`
+
+	// Password Пороль пользователя
+	Password Password `json:"password"`
+}
+
+// LoginUserRes Тело ответа при успешном входе пользователя
+type LoginUserRes struct {
+	// AccessToken Access токен пользователя
+	AccessToken AccessToken `json:"access_token"`
+
+	// AccessTokenExpiresAt Время истечения Access токена
+	AccessTokenExpiresAt AccessTokenExpiresAt `json:"access_token_expires_at"`
+
+	// RefreshToken Refresh токен пользователя
+	RefreshToken RefreshToken `json:"refresh_token"`
+
+	// RefreshTokenExpiresAt Время истечения Refresh токена
+	RefreshTokenExpiresAt RefreshTokenExpiresAt `json:"refresh_token_expires_at"`
+
+	// SessionId ID созданной сессии
+	SessionId SessionId `json:"session_id"`
+
+	// User Тело ответа при успешной регистрации пользователя
+	User UserRes `json:"user"`
+}
+
 // Password Пороль пользователя
 type Password = string
 
-// User Информация о пользователе
-type User struct {
+// RefreshToken Refresh токен пользователя
+type RefreshToken = string
+
+// RefreshTokenExpiresAt Время истечения Refresh токена
+type RefreshTokenExpiresAt = openapi_types.Date
+
+// RenewAccessTokenReq Запрос на обновление access токена
+type RenewAccessTokenReq struct {
+	// RefreshToken Refresh токен пользователя
+	RefreshToken RefreshToken `json:"refresh_token"`
+}
+
+// RenewAccessTokenRes Ответ на запрос обновления access токена
+type RenewAccessTokenRes struct {
+	// AccessToken Access токен пользователя
+	AccessToken AccessToken `json:"access_token"`
+
+	// AccessTokenExpiresAt Время истечения Access токена
+	AccessTokenExpiresAt AccessTokenExpiresAt `json:"access_token_expires_at"`
+}
+
+// SessionId ID созданной сессии
+type SessionId = int
+
+// UserReq Тело запроса при регистрации нового пользователя
+type UserReq struct {
+	// Email Уникальный email пользователя
+	Email   Email   `json:"email"`
+	IsAdmin IsAdmin `json:"is_admin"`
+
+	// Password Пороль пользователя
+	Password Password `json:"password"`
+
+	// Username Уникальный логин пользователя
+	Username Username `json:"username"`
+}
+
+// UserRes Тело ответа при успешной регистрации пользователя
+type UserRes struct {
 	// Email Уникальный email пользователя
 	Email   Email   `json:"email"`
 	IsAdmin IsAdmin `json:"is_admin"`
@@ -48,33 +122,14 @@ type User struct {
 // Username Уникальный логин пользователя
 type Username = string
 
-// LogInJSONBody defines parameters for LogIn.
-type LogInJSONBody struct {
-	// Password Пороль пользователя
-	Password Password `json:"password"`
-
-	// Username Уникальный логин пользователя
-	Username Username `json:"username"`
-}
-
-// SignInJSONBody defines parameters for SignIn.
-type SignInJSONBody struct {
-	// Email Уникальный email пользователя
-	Email   Email   `json:"email"`
-	IsAdmin IsAdmin `json:"is_admin"`
-
-	// Password Пороль пользователя
-	Password Password `json:"password"`
-
-	// Username Уникальный логин пользователя
-	Username Username `json:"username"`
-}
-
 // LogInJSONRequestBody defines body for LogIn for application/json ContentType.
-type LogInJSONRequestBody LogInJSONBody
+type LogInJSONRequestBody = LoginUserReq
+
+// RenewAccessTokenJSONRequestBody defines body for RenewAccessToken for application/json ContentType.
+type RenewAccessTokenJSONRequestBody = RenewAccessTokenReq
 
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
-type SignInJSONRequestBody SignInJSONBody
+type SignInJSONRequestBody = UserReq
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -149,30 +204,26 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// CheckServer request
-	CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// LogInWithBody request with any body
 	LogInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	LogIn(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// LogOut request
+	LogOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CheckServer request
+	CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RenewAccessTokenWithBody request with any body
+	RenewAccessTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RenewAccessToken(ctx context.Context, body RenewAccessTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// SignInWithBody request with any body
 	SignInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
-
-func (c *Client) CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCheckServerRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
 }
 
 func (c *Client) LogInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -189,6 +240,54 @@ func (c *Client) LogInWithBody(ctx context.Context, contentType string, body io.
 
 func (c *Client) LogIn(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewLogInRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) LogOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLogOutRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CheckServer(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCheckServerRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RenewAccessTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRenewAccessTokenRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RenewAccessToken(ctx context.Context, body RenewAccessTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRenewAccessTokenRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +322,73 @@ func (c *Client) SignIn(ctx context.Context, body SignInJSONRequestBody, reqEdit
 	return c.Client.Do(req)
 }
 
+// NewLogInRequest calls the generic LogIn builder with application/json body
+func NewLogInRequest(server string, body LogInJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewLogInRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewLogInRequestWithBody generates requests for LogIn with any type of body
+func NewLogInRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/login")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewLogOutRequest generates requests for LogOut
+func NewLogOutRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/logout")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCheckServerRequest generates requests for CheckServer
 func NewCheckServerRequest(server string) (*http.Request, error) {
 	var err error
@@ -250,19 +416,19 @@ func NewCheckServerRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewLogInRequest calls the generic LogIn builder with application/json body
-func NewLogInRequest(server string, body LogInJSONRequestBody) (*http.Request, error) {
+// NewRenewAccessTokenRequest calls the generic RenewAccessToken builder with application/json body
+func NewRenewAccessTokenRequest(server string, body RenewAccessTokenJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewLogInRequestWithBody(server, "application/json", bodyReader)
+	return NewRenewAccessTokenRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewLogInRequestWithBody generates requests for LogIn with any type of body
-func NewLogInRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewRenewAccessTokenRequestWithBody generates requests for RenewAccessToken with any type of body
+func NewRenewAccessTokenRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -270,7 +436,7 @@ func NewLogInRequestWithBody(server string, contentType string, body io.Reader) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/user/login")
+	operationPath := fmt.Sprintf("/renew")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -310,7 +476,7 @@ func NewSignInRequestWithBody(server string, contentType string, body io.Reader)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/user/signin")
+	operationPath := fmt.Sprintf("/signin")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -373,18 +539,73 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// CheckServerWithResponse request
-	CheckServerWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckServerResponse, error)
-
 	// LogInWithBodyWithResponse request with any body
 	LogInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LogInResponse, error)
 
 	LogInWithResponse(ctx context.Context, body LogInJSONRequestBody, reqEditors ...RequestEditorFn) (*LogInResponse, error)
 
+	// LogOutWithResponse request
+	LogOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*LogOutResponse, error)
+
+	// CheckServerWithResponse request
+	CheckServerWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckServerResponse, error)
+
+	// RenewAccessTokenWithBodyWithResponse request with any body
+	RenewAccessTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RenewAccessTokenResponse, error)
+
+	RenewAccessTokenWithResponse(ctx context.Context, body RenewAccessTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*RenewAccessTokenResponse, error)
+
 	// SignInWithBodyWithResponse request with any body
 	SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error)
 
 	SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error)
+}
+
+type LogInResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LoginUserRes
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r LogInResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LogInResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type LogOutResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r LogOutResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LogOutResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type CheckServerResponse struct {
@@ -409,16 +630,16 @@ func (r CheckServerResponse) StatusCode() int {
 	return 0
 }
 
-type LogInResponse struct {
+type RenewAccessTokenResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *User
+	JSON200      *RenewAccessTokenRes
 	JSON400      *ErrorResponse
 	JSON401      *ErrorResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r LogInResponse) Status() string {
+func (r RenewAccessTokenResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -426,7 +647,7 @@ func (r LogInResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r LogInResponse) StatusCode() int {
+func (r RenewAccessTokenResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -436,7 +657,7 @@ func (r LogInResponse) StatusCode() int {
 type SignInResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *User
+	JSON200      *UserRes
 	JSON400      *ErrorResponse
 	JSON401      *ErrorResponse
 }
@@ -457,15 +678,6 @@ func (r SignInResponse) StatusCode() int {
 	return 0
 }
 
-// CheckServerWithResponse request returning *CheckServerResponse
-func (c *ClientWithResponses) CheckServerWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckServerResponse, error) {
-	rsp, err := c.CheckServer(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCheckServerResponse(rsp)
-}
-
 // LogInWithBodyWithResponse request with arbitrary body returning *LogInResponse
 func (c *ClientWithResponses) LogInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LogInResponse, error) {
 	rsp, err := c.LogInWithBody(ctx, contentType, body, reqEditors...)
@@ -483,6 +695,41 @@ func (c *ClientWithResponses) LogInWithResponse(ctx context.Context, body LogInJ
 	return ParseLogInResponse(rsp)
 }
 
+// LogOutWithResponse request returning *LogOutResponse
+func (c *ClientWithResponses) LogOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*LogOutResponse, error) {
+	rsp, err := c.LogOut(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLogOutResponse(rsp)
+}
+
+// CheckServerWithResponse request returning *CheckServerResponse
+func (c *ClientWithResponses) CheckServerWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CheckServerResponse, error) {
+	rsp, err := c.CheckServer(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCheckServerResponse(rsp)
+}
+
+// RenewAccessTokenWithBodyWithResponse request with arbitrary body returning *RenewAccessTokenResponse
+func (c *ClientWithResponses) RenewAccessTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RenewAccessTokenResponse, error) {
+	rsp, err := c.RenewAccessTokenWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRenewAccessTokenResponse(rsp)
+}
+
+func (c *ClientWithResponses) RenewAccessTokenWithResponse(ctx context.Context, body RenewAccessTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*RenewAccessTokenResponse, error) {
+	rsp, err := c.RenewAccessToken(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRenewAccessTokenResponse(rsp)
+}
+
 // SignInWithBodyWithResponse request with arbitrary body returning *SignInResponse
 func (c *ClientWithResponses) SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error) {
 	rsp, err := c.SignInWithBody(ctx, contentType, body, reqEditors...)
@@ -498,6 +745,79 @@ func (c *ClientWithResponses) SignInWithResponse(ctx context.Context, body SignI
 		return nil, err
 	}
 	return ParseSignInResponse(rsp)
+}
+
+// ParseLogInResponse parses an HTTP response from a LogInWithResponse call
+func ParseLogInResponse(rsp *http.Response) (*LogInResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LogInResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LoginUserRes
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseLogOutResponse parses an HTTP response from a LogOutWithResponse call
+func ParseLogOutResponse(rsp *http.Response) (*LogOutResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LogOutResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseCheckServerResponse parses an HTTP response from a CheckServerWithResponse call
@@ -526,22 +846,22 @@ func ParseCheckServerResponse(rsp *http.Response) (*CheckServerResponse, error) 
 	return response, nil
 }
 
-// ParseLogInResponse parses an HTTP response from a LogInWithResponse call
-func ParseLogInResponse(rsp *http.Response) (*LogInResponse, error) {
+// ParseRenewAccessTokenResponse parses an HTTP response from a RenewAccessTokenWithResponse call
+func ParseRenewAccessTokenResponse(rsp *http.Response) (*RenewAccessTokenResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &LogInResponse{
+	response := &RenewAccessTokenResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest User
+		var dest RenewAccessTokenRes
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -581,7 +901,7 @@ func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest User
+		var dest UserRes
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -608,14 +928,20 @@ func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Вход пользователя
+	// (POST /login)
+	LogIn(c *gin.Context)
+	// Выход пользователя
+	// (POST /logout)
+	LogOut(c *gin.Context)
 	// Проверка доступности сервера
 	// (GET /ping)
 	CheckServer(c *gin.Context)
-	// Вход пользователя
-	// (POST /user/login)
-	LogIn(c *gin.Context)
+	// Обновлене access токена
+	// (POST /renew)
+	RenewAccessToken(c *gin.Context)
 	// Регистрация нового пользователя
-	// (POST /user/signin)
+	// (POST /signin)
 	SignIn(c *gin.Context)
 }
 
@@ -627,6 +953,32 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// LogIn operation middleware
+func (siw *ServerInterfaceWrapper) LogIn(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.LogIn(c)
+}
+
+// LogOut operation middleware
+func (siw *ServerInterfaceWrapper) LogOut(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.LogOut(c)
+}
 
 // CheckServer operation middleware
 func (siw *ServerInterfaceWrapper) CheckServer(c *gin.Context) {
@@ -641,8 +993,8 @@ func (siw *ServerInterfaceWrapper) CheckServer(c *gin.Context) {
 	siw.Handler.CheckServer(c)
 }
 
-// LogIn operation middleware
-func (siw *ServerInterfaceWrapper) LogIn(c *gin.Context) {
+// RenewAccessToken operation middleware
+func (siw *ServerInterfaceWrapper) RenewAccessToken(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -651,7 +1003,7 @@ func (siw *ServerInterfaceWrapper) LogIn(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.LogIn(c)
+	siw.Handler.RenewAccessToken(c)
 }
 
 // SignIn operation middleware
@@ -694,36 +1046,45 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.POST(options.BaseURL+"/login", wrapper.LogIn)
+	router.POST(options.BaseURL+"/logout", wrapper.LogOut)
 	router.GET(options.BaseURL+"/ping", wrapper.CheckServer)
-	router.POST(options.BaseURL+"/user/login", wrapper.LogIn)
-	router.POST(options.BaseURL+"/user/signin", wrapper.SignIn)
+	router.POST(options.BaseURL+"/renew", wrapper.RenewAccessToken)
+	router.POST(options.BaseURL+"/signin", wrapper.SignIn)
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xXS2/bRhf9K4P5viUh0XYMBFz1sQoaoEWzjIKCkScyE4lkSCqJYRjQo3m0ThOgKNAC",
-	"RZs+Fl0VoGUxoW2R/gv3/qPiXlIUZVGy2yZtEWRjC+Q8zpx7zrnDXdl0Oq5jKzvwpbEr/ea26pj8U3VM",
-	"q00/tpTf9Cw3sBxbGhJ+hQRiOIYQTvApJLgPR4LHCjiFlB++ghRGEOIAIjjB51KT6oHZcdtKGrLrK+89",
-	"Gl7zulKTwY5LT/3As+yW3NOk8jzH+1T5rmP7qmL777A/2weHEOEA+/hcwJi2EjCCFF7BCHsQ4hcQEVh6",
-	"nOITiOEAjiFehvNZGeeu9JTp85aNrq5vNCGFA/wSn2MfkmxZiDReCh9DBBMcCngFIZxiD1LsLyVD0HQB",
-	"E0jhJYEXcID7OMCngnfoQQgHkOIAQkh4Z0WsuJ7jKi+wlF+GtkDOj3AKMfZpLuE7c+yRwD7zcwApjCGB",
-	"FI4Efg4p9mACkdRkx7KvKrsVbEtjc6E2e5r01N2u5aktaVyfgrhRjHNu3lbNgNBa/mfmVsdihPnLm47T",
-	"VqbNZzF9/77jbVXgf8FYmLeLqenufeUFO2vrG5c2q8REYqvSECTFsUN8lCtkyY5MzDz/hTX+76lb0pD/",
-	"q89cVM8tVM8GnWFj1YRiXA7cNjvqvDnFuLPVKV5oOdoSjqqSlTe8gOHhBFI4hBiSi7t+bX1jsUaE27Jv",
-	"ORcQM/Yhwh6MsocNmxazAl4evoUQDgkHY0jh+Mxoqcl7yvOzlddqOh3ZcZVtupY05EZNr61Rlc1gmwtc",
-	"dwmcsStbKqhA9jsOyKICv4IExkxADAl5OT4nnTgdYMTQ2JOH7HV6lFBs4ADiGXT6G5ZzIcQB7mckk0NK",
-	"eYP7NdGwGzb8BhEc08zpZoc8d0JSp6wZwjiLnZcwnq5zmu3HlcUhHyHCJ9NSE8BRNifmPbnCEwqyEB9T",
-	"nNErms0nn8WjoIF8ppRe40OBfXzEb0Ps0QgY1biOZC6T2L2yJQ354bZq3rmmvHvKk6TqrBdwYdZ1nf41",
-	"HTtQNpcmUA+Cuts2M39lvmCPFtpz7lTL7kxRf56RXirLRdnXBB0VToiiKWGPIWRuGgRbfPxRQ9YaNvzC",
-	"oZKWeKXCcFMYQQgvSQgaCSaTQ8haI5pTkUsiwSEjaEjnDq9Jar60wIzpum2rybTWb+f9YsbPyuia68FV",
-	"ZP1AtcvB7Je7SEhaKDFDZ4szWiJilcQW5ookc/Rwv0bwNzP4q2rCFL2WwgzElFpWewoTsanrBdATfMYt",
-	"8kjAGHs45GQ50gQcs6EmEIl1Xa9x5vrdTsf0drh5zXk7LEqIQzhd6m5ehGO83nZamYhdx69Kne+nkbtg",
-	"mKtO64otswag/OADZ2vnT2lhvruV+/MqlRTjXnO/KtZd7FMVSvyG+wOpMFrVimZ7BV5X7Z0bK3/dPHzn",
-	"qEL6NT6ke9dCVM5FLqRvgZkv6Wv/IPwXlUV/mgUG9nFI3wFsvlHWkYtDjOjY1A/p4Dwejuno2KNfOJjK",
-	"ajzT2NsSVoUYl1lmlku+1bJXBtNPrIaYs643u1An+V3scOnVmp05H2XXrJb9GrPszd/U/+20nN7ui/VX",
-	"XvTPC9AL1uw/kKbLXD8fptl9tccCjXKBxnmfDiF5l7XvsvbNZ+3fyUcugs/fQr40rldeCuc/zcv3S/H+",
-	"J1ekJrteWxpyOwhco15vO02zve34gXFZv6zX6Qt478beHwEAAP//zD/FdgkUAAA=",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

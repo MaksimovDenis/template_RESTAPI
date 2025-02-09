@@ -9,10 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAuthMiddlewareFunc(tokenMaker *token.JWTMaker) gin.HandlerFunc {
+func GetAuthMiddlewareFunc(tokenMaker *token.JWTMaker) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		// read the authorization header
-		// verify the token
+		if ctx.Request.URL.Path == "/api/login" || ctx.Request.URL.Path == "/api/signin" {
+			ctx.Next()
+			return
+		}
+
 		claims, err := verifyClaimsFromAuthHeader(ctx, *tokenMaker)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -24,10 +27,13 @@ func GetAuthMiddlewareFunc(tokenMaker *token.JWTMaker) gin.HandlerFunc {
 	}
 }
 
-func GetAdminMiddlewareFunc(tokenMaker *token.JWTMaker) gin.HandlerFunc {
+func GetAdminMiddlewareFunc(tokenMaker *token.JWTMaker) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		// read the authorization header
-		// verify the token
+		if ctx.Request.URL.Path == "/api/login" || ctx.Request.URL.Path == "/api/signin" {
+			ctx.Next()
+			return
+		}
+
 		claims, err := verifyClaimsFromAuthHeader(ctx, *tokenMaker)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})

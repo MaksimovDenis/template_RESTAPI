@@ -36,7 +36,7 @@ paths:
         "500":
           description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
 
-  /user/signin:
+  /signin:
     post:
       summary: Регистрация нового пользователя
       description: Регистрация нового пользователя
@@ -45,30 +45,16 @@ paths:
         description: Данные нового пользователя
         required: true
         content:
-          application/json:
-            schema: 
-              type: object
-              properties:
-                username:
-                  $ref: "#/components/schemas/username"
-                email:
-                  $ref: "#/components/schemas/email"
-                password:
-                  $ref: "#/components/schemas/password"
-                is_admin:
-                  $ref: "#/components/schemas/is_admin"
-              required:
-                - username
-                - email
-                - password
-                - is_admin
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userReq"
       responses:
         "200":
           description: Пользователь успешно зарегестрирован
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/user"
+                $ref: "#/components/schemas/userRes"
         "400":
           description: Неверный формат запроса или его параметры.
           content:
@@ -84,7 +70,7 @@ paths:
         "500":
           description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
   
-  /user/login:
+  /login:
     post:
       summary: Вход пользователя
       description: Логин
@@ -93,24 +79,16 @@ paths:
         description: Данные пользователя
         required: true
         content:
-          application/json:
-            schema: 
-              type: object
-              properties:
-                username:
-                  $ref: "#/components/schemas/username"
-                password:
-                  $ref: "#/components/schemas/password"
-              required:
-                - username
-                - password
+            application/json:
+              schema:
+                $ref: "#/components/schemas/loginUserReq"
       responses:
         "200":
           description: Вход выполнен успешно
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/user"
+                $ref: "#/components/schemas/loginUserRes"
         "400":
           description: Неверный формат запроса или его параметры.
           content:
@@ -125,6 +103,63 @@ paths:
                 $ref: "#/components/schemas/errorResponse"
         "500":
           description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+
+  /logout:
+    post:
+      summary: Выход пользователя
+      description: Логаут
+      operationId: logOut
+      responses:
+        "200":
+          description: Вход выполнен успешно
+        "400":
+          description: Неверный формат запроса или его параметры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "401":
+          description: Пользователь не существует или введены некорректные данные.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "500":
+          description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+
+  /renew:
+    post:
+      summary: Обновлене access токена
+      description: Обновлене access токена
+      operationId: renewAccessToken
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/renewAccessTokenReq"
+      responses:
+        "200":
+          description: Access токен обновлён успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/renewAccessTokenRes"
+        "400":
+          description: Неверный формат запроса или его параметры.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "401":
+          description: Пользователь не существует или введены некорректные данные.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorResponse"
+        "500":
+          description: Сервер не готов обрабатывать запросы, если ответ статусом 500 или любой другой, кроме 200.
+
 
 components:
   schemas:
@@ -142,9 +177,46 @@ components:
       example: qwerty12345
     is_admin:
       type: boolean
-    user:
+    session_id:
+      type: integer
+      description: ID созданной сессии
+    access_token:
+      type: string
+      description: Access токен пользователя
+    refresh_token:
+      type: string
+      description: Refresh токен пользователя
+    access_token_expires_at:
+      type: string
+      format: date
+      description: Время истечения Access токена
+    refresh_token_expires_at:
+      type: string
+      format: date
+      description: Время истечения Refresh токена
+    
+    
+    userReq:
       type: object
-      description: Информация о пользователе
+      description: Тело запроса при регистрации нового пользователя
+      properties:
+        username:
+          $ref: "#/components/schemas/username"
+        email:
+          $ref: "#/components/schemas/email"
+        password:
+          $ref: "#/components/schemas/password"
+        is_admin:
+          $ref: "#/components/schemas/is_admin"
+      required:
+        - username
+        - email
+        - password
+        - is_admin
+    
+    userRes:
+      type: object
+      description: Тело ответа при успешной регистрации пользователя
       properties:
         username:
           $ref: "#/components/schemas/username"
@@ -156,6 +228,63 @@ components:
         - username
         - email
         - is_admin
+
+    loginUserReq:
+      type: object
+      description: Тело запроса при входе пользователя
+      properties:
+        email:
+          $ref: "#/components/schemas/email"
+        password:
+          $ref: "#/components/schemas/password"
+      required:
+        - email
+        - password
+
+    loginUserRes:
+      type: object
+      description: Тело ответа при успешном входе пользователя
+      properties:
+        session_id:
+          $ref: "#/components/schemas/session_id"
+        access_token:
+          $ref: "#/components/schemas/access_token"
+        refresh_token:
+          $ref: "#/components/schemas/refresh_token"
+        access_token_expires_at:
+          $ref: "#/components/schemas/access_token_expires_at"
+        refresh_token_expires_at:
+          $ref: "#/components/schemas/refresh_token_expires_at"
+        user:
+          $ref: "#/components/schemas/userRes"
+      required:
+        - session_id
+        - access_token
+        - refresh_token
+        - access_token_expires_at
+        - refresh_token_expires_at
+        - user
+
+    renewAccessTokenReq:
+      type: object
+      description: Запрос на обновление access токена
+      properties:
+        refresh_token:
+          $ref: "#/components/schemas/refresh_token"
+      required:
+        - refresh_token
+
+    renewAccessTokenRes:
+      type: object
+      description: Ответ на запрос обновления access токена
+      properties:
+        access_token:
+          $ref: "#/components/schemas/access_token"
+        access_token_expires_at:
+          $ref: "#/components/schemas/access_token_expires_at"
+      required:
+        - access_token
+        - access_token_expires_at
 
     errorResponse:
       type: object

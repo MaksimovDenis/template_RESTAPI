@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,6 +9,8 @@ import (
 	"templates_new/internal/closer"
 	"templates_new/internal/config"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type App struct {
@@ -70,7 +71,7 @@ func (app *App) initServiceProvider(_ context.Context) error {
 }
 
 func (app *App) initHTTPServer(ctx context.Context) error {
-	router := app.serviceProvider.ServiceHandler(ctx).InitRoutes()
+	router := app.serviceProvider.AppHandler(ctx).InitRoutes()
 
 	app.httpServer = &http.Server{
 		Addr:    app.serviceProvider.ServerConfig().Address(),
@@ -85,7 +86,7 @@ func (app *App) runHTTPServer() error {
 
 	go func() {
 		if err := app.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Could not listen on %s: %v\n", app.httpServer.Addr, err)
+			log.Fatal().Err(err).Msgf("Could not listen on %s\n", app.httpServer.Addr)
 		}
 	}()
 
@@ -98,9 +99,9 @@ func (app *App) runHTTPServer() error {
 	defer cancel()
 
 	if err := app.httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("HTTP server Shutdown: %v", err)
+		log.Fatal().Err(err).Msg("HTTP server Shutdown")
 	}
 
-	log.Println("HTTP server existing")
+	log.Logger.Println("HTTP server existing")
 	return nil
 }

@@ -141,7 +141,7 @@ func (srv *serviceProvider) TokenMaker(ctx context.Context) *token.JWTMaker {
 }
 
 func (srv *serviceProvider) initLogger() zerolog.Logger {
-	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("./internal/logs/app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to open log file")
 	}

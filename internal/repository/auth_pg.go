@@ -85,17 +85,17 @@ func (rep *AuthRepo) LogIn(ctx context.Context, user *models.User) (*models.User
 func (rep *AuthRepo) CreateSession(ctx context.Context,
 	user *models.User,
 	userClaims *token.UserClaims,
-	refreshToken string) (int, error) {
+	refreshToken string) (string, error) {
 	builder := squirrel.Insert("sessions").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("user_email", "refresh_token", "expires_at").
-		Values(user.Email, refreshToken, userClaims.ExpiresAt.Time).
+		Columns("id", "user_email", "refresh_token", "expires_at").
+		Values(userClaims.RegisteredClaims.ID, user.Email, refreshToken, userClaims.ExpiresAt.Time).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
 	if err != nil {
 		rep.log.Error().Err(err).Msg("CreateSession: failed to build SQL query")
-		return 0, err
+		return "", err
 	}
 
 	queryStruct := db.Query{
@@ -103,18 +103,18 @@ func (rep *AuthRepo) CreateSession(ctx context.Context,
 		QueryRow: query,
 	}
 
-	var sessionId int
+	var sessionId string
 
 	err = rep.db.DB().QueryRowContext(ctx, queryStruct, args...).Scan(&sessionId)
 	if err != nil {
 		rep.log.Error().Err(err).Msg("CreateSession: failed to execute query")
-		return 0, status.Errorf(codes.Internal, "Internal server error")
+		return "", status.Errorf(codes.Internal, "Internal server error")
 	}
 
 	return sessionId, nil
 }
 
-func (rep *AuthRepo) DeleteSession(ctx context.Context, id int) error {
+func (rep *AuthRepo) DeleteSession(ctx context.Context, id string) error {
 	builder := squirrel.Delete("sessions").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id})
@@ -145,9 +145,10 @@ func (rep *AuthRepo) DeleteSession(ctx context.Context, id int) error {
 	return nil
 }
 
-func (rep *AuthRepo) GetSessionById(ctx context.Context, id int) (*models.Session, error) {
-	builder := squirrel.Select("sessions").
+func (rep *AuthRepo) GetSessionById(ctx context.Context, id string) (*models.Session, error) {
+	builder := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
+		From("sessions").
 		Where(squirrel.Eq{"id": id})
 
 	query, args, err := builder.ToSql()

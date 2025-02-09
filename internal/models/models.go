@@ -18,11 +18,11 @@ type UserRes struct {
 	RefreshToken          string    `json:"refresh_token"`
 	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
 	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
-	SessionId             int       `json:"session_id"`
+	SessionId             string    `json:"session_id"`
 }
 
 type Session struct {
-	Id           int       `json:"id"`
+	Id           string    `json:"id"`
 	UserEmail    string    `json:"user_email"`
 	RefreshToken string    `json:"refresh_token"`
 	IsRevoked    bool      `json:"is_revoked"`

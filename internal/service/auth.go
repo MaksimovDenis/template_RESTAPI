@@ -105,7 +105,7 @@ func (auth *AuthService) LogIn(ctx context.Context, user *models.User) (*models.
 	return res, nil
 }
 
-func (auth *AuthService) LogOut(ctx context.Context, id int) error {
+func (auth *AuthService) LogOut(ctx context.Context, id string) error {
 	if err := auth.appRepository.DeleteSession(ctx, id); err != nil {
 		auth.log.Error().Err(err).Msg("failed to delete session")
 		return err
@@ -120,7 +120,7 @@ func (auth *AuthService) RenewAccessToken(ctx context.Context, refreshToken stri
 		return nil, "", err
 	}
 
-	session, err := auth.appRepository.GetSessionById(ctx, int(refreshClaims.ID))
+	session, err := auth.appRepository.GetSessionById(ctx, refreshClaims.RegisteredClaims.ID)
 	if err != nil {
 		auth.log.Error().Err(err).Msg("failed to retrieve session")
 		return nil, "", err

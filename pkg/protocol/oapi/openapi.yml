@@ -178,7 +178,7 @@ components:
     is_admin:
       type: boolean
     session_id:
-      type: integer
+      type: string
       description: ID созданной сессии
     access_token:
       type: string

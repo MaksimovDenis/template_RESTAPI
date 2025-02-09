@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-  id SERIAL PRIMARY KEY,
+  id VARCHAR(255) NOT NULL,
   user_email VARCHAR(255) NOT NULL,
   refresh_token VARCHAR(512) NOT NULL,
   is_revoked BOOLEAN NOT NULL DEFAULT false,

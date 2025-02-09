@@ -89,9 +89,9 @@ func (hdl *Handler) LogOut(ctx *gin.Context) {
 		return
 	}
 
-	sessionId := claims.(*token.UserClaims).ID
+	sessionId := claims.(*token.UserClaims).RegisteredClaims.ID
 
-	if err := hdl.appService.Autorization.LogOut(ctx, int(sessionId)); err != nil {
+	if err := hdl.appService.Autorization.LogOut(ctx, sessionId); err != nil {
 		hdl.log.Error().Err(err).Msg("failed to log out user")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Logout failed"})
 

@@ -18,7 +18,7 @@ type Server interface {
 type Autorization interface {
 	SignIn(ctx context.Context, user *models.User) (*models.User, error)
 	LogIn(ctx context.Context, user *models.User) (*models.UserRes, error)
-	LogOut(ctx context.Context, id int) error
+	LogOut(ctx context.Context, id string) error
 	RenewAccessToken(ctx context.Context, refreshToken string) (*token.UserClaims, string, error)
 }
 

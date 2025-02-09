@@ -1,0 +1,8 @@
+{"level":"error","module":"repository","error":"no rows in result set","time":"2025-02-09T21:05:18+03:00","message":"GetSessionById: failed to execute query"}
+{"level":"error","module":"service","error":"no rows in result set","time":"2025-02-09T21:05:18+03:00","message":"failed to retrieve session"}
+{"level":"error","module":"api","error":"no rows in result set","time":"2025-02-09T21:05:18+03:00","message":"failed to renew access token"}
+{"level":"error","module":"repository","error":"no rows in result set","time":"2025-02-09T21:07:05+03:00","message":"GetSessionById: failed to execute query"}
+{"level":"error","module":"service","error":"no rows in result set","time":"2025-02-09T21:07:05+03:00","message":"failed to retrieve session"}
+{"level":"error","module":"api","error":"no rows in result set","time":"2025-02-09T21:07:05+03:00","message":"failed to renew access token"}
+{"level":"error","module":"service","error":"error parsing token: token signature is invalid: signature is invalid","time":"2025-02-09T21:26:05+03:00","message":"failed to verify refresh token"}
+{"level":"error","module":"api","error":"error parsing token: token signature is invalid: signature is invalid","time":"2025-02-09T21:26:05+03:00","message":"failed to renew access token"}

@@ -15,7 +15,7 @@ type Server interface {
 	CheckService(ctx *gin.Context) error
 }
 
-type Autorization interface {
+type Authorization interface {
 	SignIn(ctx context.Context, user *models.User) (*models.User, error)
 	LogIn(ctx context.Context, user *models.User) (*models.UserRes, error)
 	LogOut(ctx context.Context, id string) error
@@ -23,13 +23,13 @@ type Autorization interface {
 }
 
 type Service struct {
-	Autorization
-	Server
+	Authorization Authorization
+	Server        Server
 }
 
 func NewService(repos repository.Repository, txManager db.TxManager, token token.JWTMaker, log zerolog.Logger) *Service {
 	return &Service{
-		Autorization: newAuthService(repos, txManager, token, log),
-		Server:       newServerService(),
+		Authorization: newAuthService(repos, txManager, token, log),
+		Server:        newServerService(),
 	}
 }

@@ -26,7 +26,7 @@ func (hdl *Handler) SignIn(ctx *gin.Context) {
 		IsAdmin:  userReq.IsAdmin,
 	}
 
-	service, err := hdl.appService.Autorization.SignIn(ctx, user)
+	service, err := hdl.appService.Authorization.SignIn(ctx, user)
 	if err != nil {
 		hdl.log.Error().Err(err).Msg("failed to sign in user")
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to sign in user"})
@@ -58,7 +58,7 @@ func (hdl *Handler) LogIn(ctx *gin.Context) {
 		Password: loginReq.Password,
 	}
 
-	res, err := hdl.appService.Autorization.LogIn(ctx, user)
+	res, err := hdl.appService.Authorization.LogIn(ctx, user)
 	if err != nil {
 		hdl.log.Error().Err(err).Msg("invalid email or password")
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -91,7 +91,7 @@ func (hdl *Handler) LogOut(ctx *gin.Context) {
 
 	sessionId := claims.(*token.UserClaims).RegisteredClaims.ID
 
-	if err := hdl.appService.Autorization.LogOut(ctx, sessionId); err != nil {
+	if err := hdl.appService.Authorization.LogOut(ctx, sessionId); err != nil {
 		hdl.log.Error().Err(err).Msg("failed to log out user")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Logout failed"})
 
@@ -111,7 +111,7 @@ func (hdl *Handler) RenewAccessToken(ctx *gin.Context) {
 		return
 	}
 
-	userClaims, accessToken, err := hdl.appService.RenewAccessToken(ctx, refreshToken.RefreshToken)
+	userClaims, accessToken, err := hdl.appService.Authorization.RenewAccessToken(ctx, refreshToken.RefreshToken)
 	if err != nil {
 		hdl.log.Error().Err(err).Msg("failed to renew access token")
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to get access token"})

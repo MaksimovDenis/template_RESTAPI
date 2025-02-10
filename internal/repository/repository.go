@@ -18,7 +18,7 @@ type Authorization interface {
 }
 
 type Repository struct {
-	Authorization
+	Authorization Authorization
 }
 
 func NewRepository(db db.Client, log zerolog.Logger) *Repository {

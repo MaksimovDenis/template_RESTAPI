@@ -29,7 +29,7 @@ type Service struct {
 
 func NewService(repos repository.Repository, txManager db.TxManager, token token.JWTMaker, log zerolog.Logger) *Service {
 	return &Service{
-		Autorization: NewAuthService(repos, txManager, token, log),
-		Server:       NewServerService(),
+		Autorization: newAuthService(repos, txManager, token, log),
+		Server:       newServerService(),
 	}
 }

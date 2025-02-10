@@ -6,7 +6,7 @@ import (
 
 type ServerService struct{}
 
-func NewServerService() *ServerService {
+func newServerService() *ServerService {
 	return &ServerService{}
 }
 

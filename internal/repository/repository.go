@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Autorization interface {
+type Authorization interface {
 	SignIn(ctx context.Context, user *models.User) (*models.User, error)
 	LogIn(ctx context.Context, user *models.User) (*models.User, error)
 	CreateSession(ctx context.Context, user *models.User, userClaims *token.UserClaims, refreshToken string) (string, error)
@@ -18,9 +18,9 @@ type Autorization interface {
 }
 
 type Repository struct {
-	Autorization
+	Authorization
 }
 
 func NewRepository(db db.Client, log zerolog.Logger) *Repository {
-	return &Repository{Autorization: NewAuthRepository(db, log)}
+	return &Repository{Authorization: newAuthRepository(db, log)}
 }

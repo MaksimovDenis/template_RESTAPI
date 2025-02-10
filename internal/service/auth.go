@@ -27,7 +27,7 @@ type AuthService struct {
 	log           zerolog.Logger
 }
 
-func NewAuthService(
+func newAuthService(
 	appRepository repository.Repository,
 	txManager db.TxManager,
 	token token.JWTMaker,
@@ -50,7 +50,7 @@ func (auth *AuthService) SignIn(ctx context.Context, user *models.User) (*models
 
 	user.Password = hashed
 
-	userCreate, err := auth.appRepository.SignIn(ctx, user)
+	userCreate, err := auth.appRepository.Authorization.SignIn(ctx, user)
 	if err != nil {
 		auth.log.Error().Err(err).Msg("failed to create user")
 		return nil, err
@@ -60,7 +60,7 @@ func (auth *AuthService) SignIn(ctx context.Context, user *models.User) (*models
 }
 
 func (auth *AuthService) LogIn(ctx context.Context, user *models.User) (*models.UserRes, error) {
-	userStorage, err := auth.appRepository.Autorization.LogIn(ctx, user)
+	userStorage, err := auth.appRepository.Authorization.LogIn(ctx, user)
 	if err != nil {
 		auth.log.Error().Err(err).Msg("failed to retrieve user from storage")
 		return nil, err
@@ -83,7 +83,7 @@ func (auth *AuthService) LogIn(ctx context.Context, user *models.User) (*models.
 		return nil, err
 	}
 
-	sessionId, err := auth.appRepository.CreateSession(ctx, userStorage, refreshClaims, refreshToken)
+	sessionId, err := auth.appRepository.Authorization.CreateSession(ctx, userStorage, refreshClaims, refreshToken)
 	if err != nil {
 		auth.log.Error().Err(err).Msg("failed to create session")
 		return nil, err
@@ -106,7 +106,7 @@ func (auth *AuthService) LogIn(ctx context.Context, user *models.User) (*models.
 }
 
 func (auth *AuthService) LogOut(ctx context.Context, id string) error {
-	if err := auth.appRepository.DeleteSession(ctx, id); err != nil {
+	if err := auth.appRepository.Authorization.DeleteSession(ctx, id); err != nil {
 		auth.log.Error().Err(err).Msg("failed to delete session")
 		return err
 	}
@@ -120,7 +120,7 @@ func (auth *AuthService) RenewAccessToken(ctx context.Context, refreshToken stri
 		return nil, "", err
 	}
 
-	session, err := auth.appRepository.GetSessionById(ctx, refreshClaims.RegisteredClaims.ID)
+	session, err := auth.appRepository.Authorization.GetSessionById(ctx, refreshClaims.RegisteredClaims.ID)
 	if err != nil {
 		auth.log.Error().Err(err).Msg("failed to retrieve session")
 		return nil, "", err

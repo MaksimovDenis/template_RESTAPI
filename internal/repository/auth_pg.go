@@ -17,7 +17,7 @@ type AuthRepo struct {
 	log zerolog.Logger
 }
 
-func NewAuthRepository(db db.Client, log zerolog.Logger) *AuthRepo {
+func newAuthRepository(db db.Client, log zerolog.Logger) *AuthRepo {
 	return &AuthRepo{
 		db:  db,
 		log: log,

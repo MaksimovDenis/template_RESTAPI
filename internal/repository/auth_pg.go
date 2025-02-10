@@ -12,6 +12,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type Authorization interface {
+	SignIn(ctx context.Context, user *models.User) (*models.User, error)
+	LogIn(ctx context.Context, user *models.User) (*models.User, error)
+	CreateSession(ctx context.Context, user *models.User, userClaims *token.UserClaims, refreshToken string) (string, error)
+	GetSessionById(ctx context.Context, id string) (*models.Session, error)
+	DeleteSession(ctx context.Context, id string) error
+}
+
 type AuthRepo struct {
 	db  db.Client
 	log zerolog.Logger

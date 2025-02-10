@@ -20,6 +20,13 @@ const (
 	durationAccessToken time.Duration = 3 * time.Hour
 )
 
+type Authorization interface {
+	SignIn(ctx context.Context, user *models.User) (*models.User, error)
+	LogIn(ctx context.Context, user *models.User) (*models.UserRes, error)
+	LogOut(ctx context.Context, id string) error
+	RenewAccessToken(ctx context.Context, refreshToken string) (*token.UserClaims, string, error)
+}
+
 type AuthService struct {
 	appRepository repository.Repository
 	txManager     db.TxManager
